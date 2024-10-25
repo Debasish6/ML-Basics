@@ -50,7 +50,7 @@ def record_Audio():
     sample_format = pyaudio.paInt16  # 16 bits per sample
     channels = 2
     fs = 44100  # Record at 44100 samples per second
-    seconds = 3
+    seconds = 30
     filename = "output.wav"
 
     p = pyaudio.PyAudio()  # Create an interface to PortAudio
@@ -99,8 +99,8 @@ You generate only words of value, prioritizing logic and facts over speculating 
 '''
 syetem_message = syetem_message.replace(f"\n",'')
 conversation.send_message(syetem_message)
-# filename = record_Audio()
-filename = 'mumbai.mp3'
+filename = record_Audio()
+# filename = 'mumbai.mp3'
 myfile = genai.upload_file(filename)
 print(f"{myfile=}")
 
