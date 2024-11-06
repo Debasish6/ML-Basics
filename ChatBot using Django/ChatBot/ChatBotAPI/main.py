@@ -121,7 +121,7 @@ class ChatBot:
             try:
                 # Get response from Gemini model
                 response = self.get_gemini_response(user_input, self._conversation_history, previous_db_results)
-                self._conversation_history.append({"role": "user", "content": user_input})
+                # self._conversation_history.append({"role": "user", "content": user_input})
                 print("DB Response: ",response)
                 # Ensure the response is properly formatted as JSON
                 if isinstance(response, dict):
@@ -132,7 +132,7 @@ class ChatBot:
                 # Handle DB-related responses
                 db_results = self.handle_response(ai_response)
                 ai_response = json.dumps(db_results, indent=4) if db_results else json.dumps({"text": "No related products found."}, indent=4)
-                self._conversation_history.append({"role": "AI Assistant", "content": db_results})
+                # self._conversation_history.append({"role": "AI Assistant", "content": db_results})
 
             except Exception as e:
                 # If there's any error, return the error message
@@ -140,7 +140,7 @@ class ChatBot:
         else:
             # If the input is a simple query, just return a response from the Gemini model
             ai_response = self.get_gemini_response(user_input, self._conversation_history, previous_db_results)
-            self._conversation_history.append({"role": "AI Assistant", "content": ai_response})
+            # self._conversation_history.append({"role": "AI Assistant", "content": ai_response})
             
 
         # Save chat history and return the response

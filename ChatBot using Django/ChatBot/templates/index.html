@@ -1,32 +1,33 @@
-{%load static %}
+{% load static %}
 <!DOCTYPE HTML>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChatBot</title>
-    <link rel="stylesheet" href="{%static 'css/style.css' %}">
-
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
     <div class="container">
+        {% if not data %}
+        <h1>Welcome to Expand smERP Chat bot. Type 'bye' to exit.</h1><br>
+        {% endif %}
+        <h1>ChatBot</h1> 
         <div class="card">
             <div class="card-body">
-                
                 <form method="post">
                     {% csrf_token %}
-                    {% if not context %}
-                        <h1>Welcome to Expand smERP Chat bot. Type 'bye' to exit.</h1><br>
-                    {% endif %}
-                    <input class="card-text-input" name ="prompttext"type="text" placeholder="Enter Your Prompt"><br><br>
+                    <textarea rows="5" cols="60" class="card-text-input" name="prompttext" type="text" placeholder="Enter Your Prompt"></textarea><br><br>
                     <input type="submit" value="Get Response"><br><br>
-                    {% if context %}
-                        <p>{{context}}</p><br>
-                    {% endif %}
                 </form>
-
-
-
+                {% if data %}
+                    <p>AI : {{ai_data}}</p>
+                    {% for entry in data %}
+                        {% for part in entry.parts %}
+                            <p>{{ entry.role }}: {{ part }}</p>
+                        {% endfor %}
+                    {% endfor %}
+                {% endif %}
             </div>
         </div>
     </div>

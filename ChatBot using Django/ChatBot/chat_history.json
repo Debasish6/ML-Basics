@@ -13,24 +13,14 @@
     },
     {
         "role": "user",
-        "content": "What is your name"
-    },
-    {
-        "role": "AI Assistant",
-        "content": {
-            "text": "I am an AI assistant designed to help you learn about eDominer Technologies Pvt Ltd and our products. I can answer your questions about our company, Expand smERP, and its features. I can also help you with product details from our database. \n"
-        }
-    },
-    {
-        "role": "user",
         "parts": [
-            "What is your name"
+            "Give your companys address"
         ]
     },
     {
         "role": "ai",
         "parts": [
-            "{\n    \"text\": \"I am an AI assistant designed to help you learn about eDominer Technologies Pvt Ltd and our products. I can answer your questions about our company, Expand smERP, and its features. I can also help you with product details from our database. \\n\"\n}"
+            "{\n    \"text\": \"304, PS Continental, 83, 2/1, Topsia Rd, Topsia, Kolkata, West Bengal 700046 \\n\"\n}"
         ]
     }
 ]

@@ -6,13 +6,19 @@ body{
 }
 
 .card{
-    border: 2px solid black;
+    width: 400px;
+    height: auto;
+    border: 1px solid black;
     border-radius: 8px;
     padding: 2rem;
     text-align: center;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
+
 .card-text-input{
-    width: 300px;
-    height: auto;
+    width: 400px;
+    height: 30px;
     text-align: center;
+    border: 1px solid gray;
+    border-radius: 8px;
 }
