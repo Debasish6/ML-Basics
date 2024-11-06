@@ -1,0 +1,36 @@
+[
+    {
+        "role": "user",
+        "parts": [
+            "From now on, return the output as a JSON object that can be loaded in Python with the key as 'text'. For example, {\"text\": \"<output goes here>\"}"
+        ]
+    },
+    {
+        "role": "model",
+        "parts": [
+            "{\"text\":\"Sure, I can return the output as a regular JSON object with the key as `text`. Here is an example {\"text\":\"Your Output\"}."
+        ]
+    },
+    {
+        "role": "user",
+        "content": "What is your name"
+    },
+    {
+        "role": "AI Assistant",
+        "content": {
+            "text": "I am an AI assistant designed to help you learn about eDominer Technologies Pvt Ltd and our products. I can answer your questions about our company, Expand smERP, and its features. I can also help you with product details from our database. \n"
+        }
+    },
+    {
+        "role": "user",
+        "parts": [
+            "What is your name"
+        ]
+    },
+    {
+        "role": "ai",
+        "parts": [
+            "{\n    \"text\": \"I am an AI assistant designed to help you learn about eDominer Technologies Pvt Ltd and our products. I can answer your questions about our company, Expand smERP, and its features. I can also help you with product details from our database. \\n\"\n}"
+        ]
+    }
+]

@@ -1,19 +1,28 @@
-{%load static%}
-<!DOCTYPE html>
+{%load static %}
+<!DOCTYPE HTML>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChatBot</title>
+    <link rel="stylesheet" href="{%static 'css/style.css' %}">
+
 </head>
 <body>
     <div class="container">
         <div class="card">
             <div class="card-body">
-                {%csrf_token%}
+                
                 <form method="post">
-                    <input class="card-text-input" type="text" placeholder="Enter Your Prompt"><br><br>
-                    <input type="submit" value="submit">
+                    {% csrf_token %}
+                    {% if not context %}
+                        <h1>Welcome to Expand smERP Chat bot. Type 'bye' to exit.</h1><br>
+                    {% endif %}
+                    <input class="card-text-input" name ="prompttext"type="text" placeholder="Enter Your Prompt"><br><br>
+                    <input type="submit" value="Get Response"><br><br>
+                    {% if context %}
+                        <p>{{context}}</p><br>
+                    {% endif %}
                 </form>
 
 
