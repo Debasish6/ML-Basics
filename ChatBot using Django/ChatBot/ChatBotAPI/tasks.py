@@ -1,7 +1,8 @@
 from celery import shared_task
-from .main import ChatBot
 from .models import ChatSession
+from .main import ChatBot
 import json
+import os
 
 @shared_task
 def process_chatbot_request(session_id, prompt):
@@ -16,5 +17,5 @@ def process_chatbot_request(session_id, prompt):
         response = chatbot.send_prompts(prompt, chat_history)
         return json.loads(response)['text']
     except Exception as e:
-        print(f'Error: {e}')
-        return f'Error processing request: {e}'
+        print(f'Error processing request: {e}')
+        return f'An error occurred while processing your request. Please try again later.'

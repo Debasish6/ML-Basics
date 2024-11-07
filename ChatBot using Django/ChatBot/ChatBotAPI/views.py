@@ -13,26 +13,26 @@ def home(request):
 
 def chatbot(request):
     if request.method == 'POST':
-        prompt = request.POST['prompttext']
+        prompt = request.POST['prompt_text']
 
         # Get current session or create a new one
         session_id = request.session.session_key
         chat_session, created = ChatSession.objects.get_or_create(session_id=session_id)
         chat_history = chat_session.chat_history
 
-        # Process request asynchronously
-        chatbot_response_task = process_chatbot_request.delay(session_id, prompt)
+        # Process request asynchronously and wait for the result
+        chatbot_response = process_chatbot_request.delay(session_id, prompt)
 
         # Update chat history in the session
         if prompt.lower() != 'bye':
-            chat_history.append({'user': prompt})
+            chat_history.append({'user': prompt, 'ai': chatbot_response})
         chat_session.chat_history = chat_history
         chat_session.save()
 
         # Render with a placeholder message while waiting for the async response
         context = {
             'history': chat_history,
-            'ai_data': 'Processing...',
+            'ai_data': 'Processing your request, please wait...',
         }
         return render(request, "index.html", context)
 

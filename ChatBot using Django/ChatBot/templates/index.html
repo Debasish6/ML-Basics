@@ -7,8 +7,8 @@
     <h1>ChatBot</h1>
     <form method="post">
         {% csrf_token %}
-        <textarea name="prompttext" rows="5" cols="50"></textarea>
-        <input type="submit" value="Send">
+        <textarea name="prompt_text" rows="5" cols="50"></textarea>
+        <input type="submit" value="Get Response">
     </form>
     <ul>
         {% for message in history %}
