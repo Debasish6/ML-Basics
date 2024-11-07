@@ -3,11 +3,14 @@ body{
 }
 .container{
     margin: 300px;
+    text-align: center;
 }
 
 .card{
     width: 400px;
     height: auto;
+    background-color: cornsilk;
+    margin: auto;
     border: 1px solid black;
     border-radius: 8px;
     padding: 2rem;

@@ -58,6 +58,13 @@ class ChatBot:
         response = self.model.generate_content([context])
         response.resolve()
         return response.text
+    def get_gemini_response_special(self,user_input,db_result, conversation_history, previous_db_results):
+        question ="Your task is to generate a relevant text response based on the user input and the AI's response. If ai response has multiple data then give only distinct data. \n\nFor Example: \nExample-1: User Input: How many entries of records are present? AI response: 76. Your answer like this The number of entries of records are 76 \nExample-2: User Input: Tell me the Product Name whose Product back office code is 4COPI047A. AI response: 4CC Inject Copier. Your answer like this The Product Name whose Product back office code 4COPI047A is 4CC Inject Copier."
+        formatted_results = self.format_results(previous_db_results)
+        context = f"Previous results:\n{formatted_results}\n\nUser Input: {user_input}\n\nAI Response: {db_result}\n\nNew question: {question}"
+        response = self.model.generate_content([context])
+        response.resolve()
+        return response.text
 
     def _generation_config(self, temperature):
         return genai.types.GenerationConfig(temperature=temperature)
@@ -131,7 +138,8 @@ class ChatBot:
                 print("AI response: ",ai_response)
                 # Handle DB-related responses
                 db_results = self.handle_response(ai_response)
-                ai_response = json.dumps(db_results, indent=4) if db_results else json.dumps({"text": "No related products found."}, indent=4)
+                db_results_response =self.get_gemini_response_special(user_input=user_input, db_result=db_results,conversation_history=self._conversation_history,previous_db_results=previous_db_results)
+                ai_response = json.dumps(db_results_response, indent=4) if db_results else json.dumps({"text": "No related products found."}, indent=4)
                 # self._conversation_history.append({"role": "AI Assistant", "content": db_results})
 
             except Exception as e:

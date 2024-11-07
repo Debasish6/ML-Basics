@@ -14,13 +14,13 @@
     {
         "role": "user",
         "parts": [
-            "Give your companys address"
+            "Give me the hsn code of sky tone "
         ]
     },
     {
         "role": "ai",
         "parts": [
-            "{\n    \"text\": \"304, PS Continental, 83, 2/1, Topsia Rd, Topsia, Kolkata, West Bengal 700046 \\n\"\n}"
+            "\"The HSN code for 'sky tone' products are 480257, 48025790 and 48025590. \\n\""
         ]
     }
 ]
