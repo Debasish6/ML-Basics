@@ -3,21 +3,25 @@ import sys
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.vectorstores import InMemoryVectorStore
-from langchain import hub
 from langchain_community.document_loaders import PyMuPDFLoader
-from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from typing_extensions import List, TypedDict
 from langgraph.graph import MessagesState, StateGraph
 from langchain_core.tools import tool
 from langchain_core.messages import SystemMessage
 from langgraph.graph import END
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
-from IPython.display import Image, display
+import markdown
 
 # Load environment variables
 load_dotenv()
+
+def clear_console():
+    """Clear the console for both Windows and Unix-like systems."""
+    if sys.platform.startswith('win'):
+        os.system('cls')
+    else:
+        os.system('clear')
 
 # Setting up GPT-4o mini Model, Embedding models, and Vector Store
 model = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"), temperature=0, model="gpt-4o-mini")
@@ -25,7 +29,7 @@ embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 vector_store = InMemoryVectorStore(embeddings)
 
 # Loading PDF
-loader = PyMuPDFLoader(r"C:\Users\eDominer\Python Project\ChatBot\ChatBot_with_Database\OpenAI Tuned Model\Help_whole.pdf")
+loader = PyMuPDFLoader(r"C:\Users\eDominer\Python Project\ChatBot\ChatBot_with_Database\OpenAI Tuned Model\Costing Detail Screen documentation.docx.pdf")
 docs = loader.load()
 
 # Splitting Documents
@@ -71,11 +75,7 @@ def generate(state: MessagesState):
     docs_content = "\n\n".join(doc.content for doc in tool_messages)
 
     system_message_content = (
-        "You are an assistant for question-answering tasks. "
-        "Use the following pieces of retrieved context to answer "
-        "the question. If you don't know the answer, say that you "
-        "don't know. Use three sentences maximum and keep the "
-        "answer concise."
+        "You are an AI assistant for eDominer Technologies Pvt Ltd. Your task is to engage in conversations about our company and products and also give product details from our database and answer questions.Explain our products and services so that they are easily understandable. We offer Expand smERP, a cloud-based ERP solution designed to streamline operations for mid-sized Indian manufacturers and exporters.\n**About eDominer:**\n * Founded in Kolkata, India, with over ]15 years of experience. \n* Led by a team of experts in technology and business automation.\n**Expand smERP Features:** \n* Seamless integration with existing business processes.\n* Automation of complex tasks for increased efficiency.\n* User-friendly interface with minimal training required.\n* Secure data storage on Microsoft Azure with SSL encryption.\n* Integration with popular platforms like WhatsApp, Paytm, and Amazon.\n* Customizable options to fit specific business needs.\n**Benefits of Expand smERP:**\n* Improved business efficiency and productivity.\n* Reduced costs through automation and streamlined processes.\n* Enhanced data security and management.\n* Scalable solution to grow with your business.        **Our Plans**\n1. Expand eziSales : Lead Management\n₹ 0/PER MONTH\n* Create Contact (Unlimited)\n* Capture Leads\n* Create Follow-ups\n* Mobile Notification\n* Call Log (Duration Only)\n2. Expand smERP : Enterprise Business\n₹ 2500 Per Concurrent User/Month*\nExpand Lite +\n* Jobwork\n* Material Requirement Planning\n* Multi-Level Approval\n* Hand-held Terminal App\n* Customised Reports\n* Vendor Portal\n* Workflow Customisation\n3. Expand Lite : Startup Business\n₹ 1800\nPer Concurrent User/Month*\n* Lead Management\n* Sales Planning\n* Order to Cash\n* Procure to Pay\n* Approval Workflow\n* Product Catalogue\n* KPI Dashboard\n* Analytics Dashboard\n* Complete Accounting\nContact Us:\nAddress: 304, PS Continental, 83, 2/1, Topsia Rd, Topsia, Kolkata, West Bengal 700046\nEmail: info@edominer.com\nPhone: +91 9007026542\nProduct Website: https://www.expanderp.com/aboutus/\nWebsite : https://www.edominer.com/\n**Ask me anything about eDominer or Expand smERP!"
         "\n\n"
         f"{docs_content}"
     )
@@ -108,19 +108,29 @@ config = {"configurable": {"thread_id": "abc123", "checkpoint_ns": "some_namespa
 memory = MemorySaver()
 graph = graph_builder.compile(checkpointer=memory)
 
-# Display Graph
-display(Image(graph.get_graph().draw_mermaid_png()))
 
-# Interactive Loop
 while True:
-    input_message = input("You: ")
-    if input_message != 'bye':
-        for step in graph.stream(
-            {"messages": [{"role": "user", "content": input_message}]},
-            stream_mode="values",
-            config=config,
-        ):
-            step["messages"][-1].pretty_print()
-    else:
-        print('Good Bye!')
+    user_input = input().strip()
+    if user_input.lower() == "bye":
+        print("Goodbye!")
         break
+    elif user_input.lower() == "train":
+        print("Training started...")
+        sys.stdout.flush()
+        # Simulate a training process or replace with real training logic
+        vector_store.add_documents([])  # Placeholder for training logic
+        print("Training complete!")
+        sys.stdout.flush()
+    else:
+        try:
+            for step in graph.stream({"messages": [{"role": "user", "content": user_input}]}, stream_mode="values", config=config):
+                clear_console()
+                filtered_messages = [msg for msg in step["messages"] if msg.type != "tool"]
+                for message in filtered_messages[1:]:
+                    
+                    if message.content.strip() != '':
+                        html = markdown.markdown(message.content)
+                        print(html,"\n---Expand AI Return---")
+        except Exception as e:
+            print(f"Error: {e}")
+            sys.stdout.flush()

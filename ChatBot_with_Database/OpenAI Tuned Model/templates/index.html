@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Interface</title>
+</head>
+<body>
+    <h1>Chat with eDominer Bot</h1>
+    <div id="chat-container">
+        <div id="chat-box"></div>
+        <input type="text" id="user-input" placeholder="Ask me anything..." />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        function appendMessage(content, sender) {
+            const chatBox = document.getElementById('chat-box');
+            const message = document.createElement('div');
+            message.textContent = sender + ": " + content;
+            chatBox.appendChild(message);
+        }
+
+        async function sendMessage() {
+            const userMessage = document.getElementById('user-input').value;
+            appendMessage(userMessage, 'You');
+            document.getElementById('user-input').value = '';
+
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: userMessage })
+            });
+
+            const data = await response.json();
+            appendMessage(data.response, 'Bot');
+        }
+    </script>
+</body>
+</html>

@@ -6,18 +6,22 @@
 # # print(docs[168])
 
 # print(docs[168].page_content)
-
+import os
+from dotenv import load_dotenv
 from langchain_openai import OpenAIEmbeddings
 from langchain.vectorstores import VectorStore
 import numpy as np
 import sqlite3
 from langchain_core.documents import Document
-from typing import List, Optional
+from typing import List
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+import ast  # To safely evaluate the string back to a dictionary
 
+# SQLiteVectorStore Implementation
 class SQLiteVectorStore(VectorStore):
     def __init__(self, db_path: str, embedding_model: OpenAIEmbeddings):
+        """Initialize SQLiteVectorStore."""
         self.db_path = db_path
         self.embedding_model = embedding_model
         self.connection = sqlite3.connect(db_path)
@@ -28,7 +32,7 @@ class SQLiteVectorStore(VectorStore):
 
     def _create_table(self):
         """Creates a table to store vectors and metadata."""
-        self.cursor.execute("""
+        self.cursor.execute(""" 
             CREATE TABLE IF NOT EXISTS vectors (
                 doc_id TEXT PRIMARY KEY,
                 vector BLOB,
@@ -47,49 +51,68 @@ class SQLiteVectorStore(VectorStore):
 
     def add_documents(self, documents: List[Document]):
         """Add documents to the vector store."""
-        for doc in documents:
-            # Ensure that 'id' is in the metadata
-            if 'id' not in doc.metadata:
-                doc.metadata['id'] = str(hash(doc.page_content))  # or use another method to generate a unique ID
+        try:
+            for doc in documents:
+                # Ensure that 'id' is in the metadata
+                if 'id' not in doc.metadata:
+                    doc.metadata['id'] = str(hash(doc.page_content))  # or use another method to generate a unique ID
 
-            # Get the embedding for each document
-            embedding = self.embedding_model.embed_documents([doc.page_content])[0]
-            if isinstance(embedding, list):  # If it's still a list, convert it to a numpy array
-                embedding = np.array(embedding)
-            vector_blob = self._vector_to_blob(embedding)
+                # Get the embedding for each document
+                embedding = self.embedding_model.embed_documents([doc.page_content])[0]
+                if isinstance(embedding, list):  # If it's still a list, convert it to a numpy array
+                    embedding = np.array(embedding)
 
-            # Insert the document into the SQLite table
-            self.cursor.execute("""
-                INSERT OR REPLACE INTO vectors (doc_id, vector, metadata) 
-                VALUES (?, ?, ?)
-            """, (doc.metadata["id"], vector_blob, str(doc.metadata)))
-        self.connection.commit()
+                vector_blob = self._vector_to_blob(embedding)
+
+                # Insert the document into the SQLite table
+                self.cursor.execute("""
+                    INSERT OR REPLACE INTO vectors (doc_id, vector, metadata) 
+                    VALUES (?, ?, ?)
+                """, (doc.metadata["id"], vector_blob, str(doc.metadata)))
+            
+            self.connection.commit()
+        except Exception as e:
+            print(f"Error adding documents: {e}")
 
     def similarity_search(self, query: str, k: int = 5) -> List[Document]:
         """Retrieve the top k most similar documents based on cosine similarity."""
-        query_embedding = self.embedding_model.embed_query(query)  # Use embed_query
-        if isinstance(query_embedding, list):  # If it's a list, convert it to numpy array
-            query_embedding = np.array(query_embedding)
-        query_blob = self._vector_to_blob(query_embedding)
+        try:
+            query_embedding = self.embedding_model.embed_query(query)  # Use embed_query
+            if isinstance(query_embedding, list):  # If it's a list, convert it to numpy array
+                query_embedding = np.array(query_embedding)
+            
+            print(f"Query embedding shape: {query_embedding.shape}")
 
-        # Fetch all vectors from the database
-        self.cursor.execute("SELECT doc_id, vector, metadata FROM vectors")
-        rows = self.cursor.fetchall()
+            # Fetch all vectors from the database
+            self.cursor.execute("SELECT doc_id, vector, metadata FROM vectors")
+            rows = self.cursor.fetchall()
 
-        # Compute cosine similarity for each stored vector
-        similarities = []
-        for row in rows:
-            doc_id, vector_blob, metadata = row
-            stored_vector = self._blob_to_vector(vector_blob)
-            similarity = self._cosine_similarity(query_embedding, stored_vector)
-            similarities.append((doc_id, similarity, metadata))
+            similarities = []
+            for row in rows:
+                doc_id, vector_blob, metadata_str = row
+                
+                # Convert metadata string back to dictionary
+                metadata = ast.literal_eval(metadata_str)  # Safely evaluate string to dictionary
+                
+                stored_vector = self._blob_to_vector(vector_blob)
 
-        # Sort by similarity and fetch top k results
-        similarities.sort(key=lambda x: x[1], reverse=True)
-        top_k_results = similarities[:k]
+                print(f"Stored vector shape: {stored_vector.shape}")
 
-        # Return the top k documents
-        return [Document(page_content="", metadata=metadata) for _, _, metadata in top_k_results]
+                if query_embedding.shape != stored_vector.shape:
+                    print(f"Shape mismatch: query({query_embedding.shape}), stored({stored_vector.shape})")
+                    continue  # Skip this iteration if shapes don't match
+
+                similarity = self._cosine_similarity(query_embedding, stored_vector)
+                similarities.append((doc_id, similarity, metadata))
+
+            similarities.sort(key=lambda x: x[1], reverse=True)
+            top_k_results = similarities[:k]
+
+            return [Document(page_content="", metadata=metadata) for _, _, metadata in top_k_results]
+
+        except Exception as e:
+            print(f"Error during similarity search: {e}")
+            return []
 
     def _cosine_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
         """Compute cosine similarity between two vectors."""
@@ -102,7 +125,7 @@ class SQLiteVectorStore(VectorStore):
         """Close the database connection."""
         self.connection.close()
 
-    def from_texts(self, texts: List[str], metadata: Optional[List[dict]] = None) -> List[Document]:
+    def from_texts(self, texts: List[str], metadata: List[dict] = None) -> List[Document]:
         """
         Convert a list of texts into a list of Document objects. 
         Each document can optionally have metadata.
@@ -115,7 +138,7 @@ class SQLiteVectorStore(VectorStore):
             # Ensure 'id' is in the metadata
             if "id" not in meta:
                 meta["id"] = str(hash(text))  # Generate a unique ID using the hash of the text
-            
+
             documents.append(Document(page_content=text, metadata=meta))
 
         return documents
@@ -123,14 +146,25 @@ class SQLiteVectorStore(VectorStore):
 
 # Example Usage
 if __name__ == "__main__":
+    # Load environment variables
+    load_dotenv()
+
+    # Print the loaded OpenAI API Key (for debugging purposes)
+    api_key = os.getenv("OPENAI_API_KEY")
+    if api_key:
+        print("OpenAI API Key loaded successfully.")
+    else:
+        print("Error: OpenAI API Key not loaded.")
+
     # Initialize the embedding model
-    embedding_model = OpenAIEmbeddings(model="text-embedding-3-small")
+    embedding_model = OpenAIEmbeddings(api_key=api_key, model="text-embedding-3-small")
 
     # Create SQLite vector store
-    vector_store = SQLiteVectorStore(db_path=r"C:\Users\eDominer\Python Project\ChatBot\ChatBot_with_Database\OpenAI Tuned Model\vectors.db", embedding_model=embedding_model)
+    db_path = r"C:\Users\eDominer\Python Project\ChatBot\ChatBot_with_Database\OpenAI Tuned Model\vectors.db"
+    vector_store = SQLiteVectorStore(db_path=db_path, embedding_model=embedding_model)
 
-    # Create sample documents
-    loader = PyMuPDFLoader(r"C:\Users\eDominer\Python Project\ChatBot\ChatBot_with_Database\OpenAI Tuned Model\Help_whole.pdf")
+    # Create sample documents by loading a PDF
+    loader = PyMuPDFLoader(r"C:\Users\eDominer\Python Project\ChatBot\ChatBot_with_Database\OpenAI Tuned Model\Customer Preference.pdf")
     docs = loader.load()
 
     # Splitting Documents
@@ -142,10 +176,12 @@ if __name__ == "__main__":
     all_splits = text_splitter.split_documents(docs)
 
     # Add documents to the vector store
+    print("Adding documents to vector store...")
     vector_store.add_documents(documents=all_splits)
 
     # Perform a similarity search
     query = "What is Customer preference?"
+    print(f"\nPerforming similarity search for query: {query}")
     results = vector_store.similarity_search(query, k=2)
 
     # Display the results
