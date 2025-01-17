@@ -2,11 +2,10 @@ from phi.agent import Agent
 from phi.model.groq import Groq
 from phi.tools.yfinance import YFinanceTools
 from phi.tools.duckduckgo import DuckDuckGo
-import openai,os
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
-openai.api_key=os.getenv("OPENAI_API_KEY")
 
 
 #Creating Web Search Agent
@@ -32,10 +31,11 @@ financial_agent = Agent(
 
 
 Multi_AI_agent =Agent(
+    model = Groq(id="llama-3.1-8b-Instant"),
     team=[web_search_agent,financial_agent],
     instructions=["Always include sources","Use tables to display the data"],
     show_tool_calls=True,
     markdown=True
 )
 
-Multi_AI_agent.print_response("Summerize analyst recommendation and share the latest news for Nvidia",stream=True)
+Multi_AI_agent.print_response("Summerize analyst recommendation and share the latest news for HDFC Bank",stream=True)
