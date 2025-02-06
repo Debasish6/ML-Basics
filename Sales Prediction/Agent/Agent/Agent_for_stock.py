@@ -1,7 +1,10 @@
 import pandas as pd
+from langchain.chains import SequentialChain
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
 import numpy as np
 
-# Sample data: Stores, Products, Stock, Sales
+# Sample data
 data = {
     'StoreID': [1, 1, 2, 2, 3, 3],
     'ProdName': ['Product A', 'Product B', 'Product A', 'Product B', 'Product A', 'Product B'],
@@ -11,63 +14,44 @@ data = {
 
 df = pd.DataFrame(data)
 
-# AI Agent to recommend stock distribution
-class StockRecommendationAgent:
-    def __init__(self, data):
-        self.data = data
-        self.recommendations = []
+# Data Ingestion chain (example)
+def data_ingestion():
+    # Here you'd load your data from a database or a file
+    return df
 
-    def analyze_stock(self):
-        # Calculate stock shortage
-        self.data['StockShortage'] = self.data['TotalStockQuantity'] - self.data['TotalSalesQuantity']
-        return self.data
-    
-    def identify_low_high_stock(self):
-        # Define thresholds for low and high stock (example thresholds)
-        low_stock_threshold = 0  # Changed to 0 to identify actual shortages
-        high_stock_threshold = 150
+# Data Transformation chain (example)
+def data_transformation(data):
+    data['StockShortage'] = data['TotalStockQuantity'] - data['TotalSalesQuantity']
+    return data
 
-        low_stock = self.data[self.data['StockShortage'] < low_stock_threshold]
-        high_stock = self.data[self.data['StockShortage'] > high_stock_threshold]
+# Model Building chain (example)
+def model_building(data):
+    X = data[['TotalStockQuantity', 'TotalSalesQuantity']]
+    y = np.where(data['StockShortage'] < 0, 1, 0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+    return model, X_test
 
-        return low_stock, high_stock
-    
-    def generate_recommendations(self, low_stock, high_stock):
-        # For each low stock store, check if another store can fulfill the demand
-        for _, low in low_stock.iterrows():
-            product = low['ProdName']
-            low_store_id = low['StoreID']
-            
-            # Look for high stock stores that have the same product
-            matching_high_stock = high_stock[high_stock['ProdName'] == product]
-            
-            if not matching_high_stock.empty:
-                for _, high in matching_high_stock.iterrows():
-                    high_store_id = high['StoreID']
-                    self.recommendations.append({
-                        'LowStockStoreID': low_store_id,
-                        'HighStockStoreID': high_store_id,
-                        'Product': product,
-                        'Recommendation': f'Transfer stock from Store {high_store_id} to Store {low_store_id} for Product {product}'
-                    })
-                    
-    def get_recommendations(self):
-        return self.recommendations
+# Recommendation Engine chain (example)
+def recommendation_engine(model, X_test, original_data):
+    predictions = model.predict(X_test)
+    recommendations = []
+    for i, pred in enumerate(predictions):
+        status = 'Shortage' if pred > 0.5 else 'Sufficient Stock'
+        recommendations.append({
+            'StoreID': original_data.iloc[i]['StoreID'],
+            'ProdName': original_data.iloc[i]['ProdName'],
+            'Status': status
+        })
+    return recommendations
 
-
-# Instantiate and run the AI agent
-agent = StockRecommendationAgent(df)
-
-# Step 1: Analyze Stock
-agent.analyze_stock()
-
-# Step 2: Identify low and high stock
-low_stock, high_stock = agent.identify_low_high_stock()
-
-# Step 3: Generate recommendations
-agent.generate_recommendations(low_stock, high_stock)
+# Combine the chains using LangChain
+data = data_ingestion()
+transformed_data = data_transformation(data)
+model, X_test = model_building(transformed_data)
+recommendations = recommendation_engine(model, X_test, transformed_data)
 
 # Output recommendations
-recommendations = agent.get_recommendations()
 for rec in recommendations:
-    print(f'LowStockStoreID: {rec["LowStockStoreID"]}, HighStockStoreID: {rec["HighStockStoreID"]}, Product: {rec["Product"]}, Recommendation: {rec["Recommendation"]}')
+    print(f'StoreID: {rec["StoreID"]}, ProdName: {rec["ProdName"]}, Status: {rec["Status"]}')
