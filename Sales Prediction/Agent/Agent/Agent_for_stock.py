@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
-# Sample data
+
 data = {
     'StoreID': [1, 1, 2, 2, 3, 3],
     'ProdName': ['Product A', 'Product B', 'Product A', 'Product B', 'Product A', 'Product B'],
@@ -14,17 +14,13 @@ data = {
 
 df = pd.DataFrame(data)
 
-# Data Ingestion chain (example)
 def data_ingestion():
-    # Here you'd load your data from a database or a file
     return df
 
-# Data Transformation chain (example)
 def data_transformation(data):
     data['StockShortage'] = data['TotalStockQuantity'] - data['TotalSalesQuantity']
     return data
 
-# Model Building chain (example)
 def model_building(data):
     X = data[['TotalStockQuantity', 'TotalSalesQuantity']]
     y = np.where(data['StockShortage'] < 0, 1, 0)
@@ -33,7 +29,6 @@ def model_building(data):
     model.fit(X_train, y_train)
     return model, X_test
 
-# Recommendation Engine chain (example)
 def recommendation_engine(model, X_test, original_data):
     predictions = model.predict(X_test)
     recommendations = []
@@ -46,12 +41,10 @@ def recommendation_engine(model, X_test, original_data):
         })
     return recommendations
 
-# Combine the chains using LangChain
 data = data_ingestion()
 transformed_data = data_transformation(data)
 model, X_test = model_building(transformed_data)
 recommendations = recommendation_engine(model, X_test, transformed_data)
 
-# Output recommendations
 for rec in recommendations:
     print(f'StoreID: {rec["StoreID"]}, ProdName: {rec["ProdName"]}, Status: {rec["Status"]}')
