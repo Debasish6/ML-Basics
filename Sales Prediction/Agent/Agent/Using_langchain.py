@@ -1,4 +1,4 @@
-from langchain_groq import ChatGroq  # Use the chat-based model
+from langchain_groq import ChatGroq
 from langchain.prompts import PromptTemplate
 # from langchain.chains import LLMChain
 from langchain_core.runnables.base import RunnableSequence
