@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import plotly.graph_objs as go
 import plotly.io as pio
-from prophet.plot import plot_plotly
+from prophet.plot import plot_plotly, plot_components_plotly
 import json
 
 class SalesForecaster:
@@ -31,19 +31,23 @@ class SalesForecaster:
             json.dump(forecast_json, json_file)
         print(f"Forecast saved to '{json_filename}'.")
 
-    def save_plot(self, product_name, fig):
-        html_filename = self.html_folder_path / f"{product_name}_product_forecast.html"
+    def save_plot(self, product_name, fig, plot_type="product_forecast"):
+        html_filename = self.html_folder_path / f"{product_name}_{plot_type}.html"
         pio.write_html(fig, file=html_filename, auto_open=False)
-        print(f"Product-based forecast saved to '{html_filename}'.")
+        print(f"{plot_type.replace('_', ' ').capitalize()} saved to '{html_filename}'.")
 
     def forecast_product(self, model, product_name):
         future = model.make_future_dataframe(periods=365)
         forecast = model.predict(future)
+       
         fig = plot_plotly(model, forecast)
         fig.update_layout(title=f'Forecast for {product_name} Product')
         self.save_plot(product_name, fig)
         self.save_forecast(product_name, forecast)
         self.figs.append(fig)
+        
+        components_fig = plot_components_plotly(model, forecast)
+        self.save_plot(product_name, components_fig, plot_type="components_forecast")
 
     def run(self):
         model_files = [f for f in self.model_dir.iterdir() if f.name.endswith('_prophet_model.pkl')]
@@ -55,11 +59,12 @@ class SalesForecaster:
                 self.forecast_product(model, product_name)
 
 
-
 model_dir = r"C:\Users\eDominer\Python Project\Sales Prediction\Time Series Prediction\Prophet_Model\All_Product_model"
 html_folder_path = r"C:\Users\eDominer\Python Project\Sales Prediction\Time Series Prediction\Prophet_Model\All_Product_HTML"
 json_folder_path = r"C:\Users\eDominer\Python Project\Sales Prediction\Time Series Prediction\Prophet_Model\All_Product_JSON"
 
+
 forecaster = SalesForecaster(model_dir, html_folder_path, json_folder_path)
 forecaster.run()
+
 
