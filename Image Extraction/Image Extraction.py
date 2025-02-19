@@ -7,11 +7,9 @@ import torchvision
 from torchvision import transforms
 from torch.utils.data import DataLoader, Dataset
 
-# Define the root directory and image files
 root = r"C:/Users/eDominer/Python Project/Products/"
 images = os.listdir(root)
 
-# Load pre-trained ResNet18 model
 model = torchvision.models.resnet18(weights="DEFAULT")
 model.eval()
 
@@ -19,7 +17,6 @@ model.eval()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = model.to(device)
 
-# Define image transformation
 transform = transforms.Compose([
     transforms.Resize((256, 256)),
     transforms.ToTensor(),
@@ -37,10 +34,14 @@ class ImageDataset(Dataset):
 
     def __getitem__(self, idx):
         img_path = self.image_paths[idx]
-        img = Image.open(img_path).convert('RGB')
-        if self.transform:
-            img = self.transform(img)
-        return img, img_path
+        try:
+            img = Image.open(img_path).convert('RGB')
+            if self.transform:
+                img = self.transform(img)
+            return img, img_path
+        except Exception as e :
+            return None,img_path
+
 
 # Function to extract features from the model's avgpool layer
 activation = {}
@@ -64,28 +65,23 @@ def extract_features(image_paths, batch_size=32):
         for batch_idx, (images, paths) in enumerate(dataloader):
             images = images.to(device)
 
-            # Forward pass through the model
             _ = model(images)
 
-            # Collect features from the avgpool layer
             vecs = activation["avgpool"].cpu().numpy()
 
-            # Append vectors and names
             all_vecs.append(vecs)
             all_names.extend(paths)
 
             if batch_idx % 10 == 0:
                 print(f"Processed {batch_idx * batch_size} images...")
 
-    all_vecs = np.vstack(all_vecs)  # Combine all feature vectors into a single array
+    all_vecs = np.vstack(all_vecs)
     return all_names, all_vecs
 
-# Process images and save the results
 image_paths = [os.path.join(root, img) for img in images]
 all_names, all_vecs = extract_features(image_paths)
 
-# Save results to disk
-np.save("all_vecs.npy", all_vecs)
-np.save("all_names.npy", all_names)
+np.save(f"C:/Users/eDominer/Python Project/Image Extraction/all_vecs1.npy", all_vecs)
+np.save(f"C:/Users/eDominer/Python Project/Image Extraction/all_names1.npy", all_names)
 
 print("Feature extraction completed and results saved!")
