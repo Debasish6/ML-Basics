@@ -11,7 +11,7 @@ load_dotenv()
 
 async def main():
     agent = Agent(
-       task="""Go to google and search for Ind vs Ban match and find who pick more wicket""",
+       task="""Go to google and search for Ind vs Ban match and find who picked more wicket""",
         llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash"),
     )
     result = await agent.run()
