@@ -17,11 +17,6 @@ model = ChatGoogleGenerativeAI(model='gemini-1.5-flash', api_key=api_key)
 
 chat_history = []
 
-import os
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
 
 system_instruction = os.getenv("system_instruction")
 if not system_instruction:
